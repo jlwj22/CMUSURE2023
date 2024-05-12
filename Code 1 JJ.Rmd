@@ -1,0 +1,315 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readr)
+county_health_data_clean <- read_csv("Dropbox/sure2023/data/county_health_data_clean.csv")
+View(county_health_data_clean)
+
+county_health_data_clean$MentalHealthProviders <- county_health_data_clean$MentalHealthProviders * 100000
+
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  head()
+```
+
+```{r MHPxPMHD}
+county_health_data_clean %>%
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProviders, y = PoorMentalHealthDays, 
+             )) + 
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(trans = "log10")+
+  theme_bw() +
+  labs(x = "Mental Health Providers Per 100k People", y = "Poor Mental Health Days", 
+       title = "Scatterplot of Poor Mental Health Days vs Mental Health Providers",
+       subtitle = "County-Level Data",
+       color = "Poor Mental Health Days")
+```
+
+```{r}
+county_health_data_clean %>%
+  ggplot(aes(x = MentalHealthProviders, y = PoorMentalHealthDays,
+             color = SomeCollege)) + 
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_gradient(low = "orange", high = "blue") +
+  theme_bw() +
+  scale_x_continuous(trans = "log10") +
+  labs(x = "Mental Health Providers per 100k People", y = "Poor Mental Health Days", 
+       title = "Scatterplot of Mental Health Providers vs. Poor Mental Health Days",
+       subtitle = "County-Level Data",
+       color = "% College Graduates")
+```
+
+```{r}
+library(ggplot2)
+county_health_data_clean %>%
+  ggplot(aes(x = SomeCollege, y = PoorMentalHealthDays,
+             color = SomeCollege)) + 
+  geom_point(alpha = .5) +
+  scale_color_gradient(low = "orange", high = "blue") +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  labs(x = "% College Graduates", y = "Poor Mental Health Days", 
+       title = "Scatterplot of Poor Mental Health Days vs % College Graduates",
+       subtitle = "County Level Data",
+       color = "% College Graduates")
+```
+
+```{r}
+# ACA as a factor
+county_health_data_clean$ACA <- factor(
+  county_health_data_clean$ACA,
+  levels = c("Not Implemented", "Implemented")
+)
+
+select_states <- c("FL", "AL", "NY", "LA")
+county_health_data_clean %>% 
+  filter(State %in% select_states, CountyRanked == 1) %>%
+  mutate(OrderedState = factor(State, levels = select_states)) %>%
+  ggplot(aes(x = MentalHealthProviders, fill = ACA)) + 
+  geom_histogram(bins = 30) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  facet_wrap(OrderedState ~ ., ncol = 2) +
+  labs(x = "Mental Health Providers per 100k People", 
+       y = "Count", 
+       title = "Mental Health Providers per 100k People, ACA vs. Non-ACA States",
+       subtitle = "County Level Data at Four Select States",
+       color = "ACA")
+```
+
+```{r}
+select_states <- c("FL", "AL", "NY", "LA")
+county_health_data_clean %>% 
+  # select counties belonging to the states
+  filter(CountyRanked == 1, State %in% select_states) %>%
+  # fix the order of states
+  mutate(OrderedState = factor(State, levels = select_states)) %>%
+  # plot
+  ggplot(aes(x = MentalHealthProvidersPer100K, y = PoorMentalHealthDays,
+             color = ACA)) + 
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_wrap(. ~ OrderedState, ncol = 2) + 
+  labs(x = "Number of Mental Health Providers Per 100K Population",
+       y = "Number of Poor Mental Health Days",
+       title = "Poor Mental Health Days vs. Mental Health Providers, ACA vs. Non-ACA States",
+       subtitle = "County Level Data at Four Select States")
+```
+
+```{r}
+lookup <- c(MedianHouseholdIncome = "Median Household Income", SomeCollege = "Some College")
+
+county_health_data_clean %>%
+  select(PoorMentalHealthDays, SomeCollege, MedianHouseholdIncome) %>%
+  pivot_longer(cols = -PoorMentalHealthDays,
+               names_to = "Name",
+               values_to = "Value") %>%
+  mutate(Name = recode(Name, !!!lookup)) %>%
+  ggplot(aes(x = Value, y = PoorMentalHealthDays)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(. ~ Name, scales = "free_x") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(
+    x = "Socioeconomic status",
+    y = "Poor Mental Health Days",
+    title = "Poor Mental Health Days VS. Socioeconomic status",
+    subtitle = "County Health Data"
+  )
+```
+
+```{r}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProvidersPer100K, y = PoorMentalHealthDays,
+             color = ACA)) + 
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_grid(. ~ ACA) +
+  labs(x = "Number of Mental Health Providers Per 100K Population",
+       y = "Number of Poor Mental Health Days",
+       title = "Poor Mental Health Days vs. Mental Health Providers Per 100K Population",
+       subtitle = "Counties in ACA vs. Non-ACA States")
+```
+
+```{r}
+long_data <- tidyr::gather(county_health_data_clean, key = "variable", value = "value", 
+                           MentalHealthProviders, PoorMentalHealthDays, LifeExpectancy)
+
+ggplot(long_data, aes(x=value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~variable, scales="free_x") +
+  theme_minimal()
+```
+
+```{r}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1, !is.na(MedianHouseholdIncome)) %>%
+  mutate(HighIncome = as.factor(ifelse(MedianHouseholdIncome >= 60000,
+                                       "$60k or higher",
+                                       "Less than $60k"))) %>%
+  ggplot(aes(x = MentalHealthProviders, y = PoorMentalHealthDays)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() + 
+  scale_x_continuous(trans = "log10") +
+  facet_grid(. ~ HighIncome) +
+  labs(title = "Poor Mental Health Days vs. Mental Health Providers, MedianIncome >? $60k")
+```
+
+```{r}
+# install.packages("usmap")
+library(usmap)
+
+# compute mental health providers per 100,000 people
+county_health_data_clean$MentalHealthProviders <- county_health_data_clean$MentalHealthProviders * 100000
+
+# aggregate data at the state level and rename the 'state' column
+state_level_data <- county_health_data_clean %>%
+  filter(CountyRanked == 1) %>%
+  select(State, MentalHealthProviders, PoorMentalHealthDays, Population) %>%
+  group_by(State) %>%
+  summarize(
+    TotalPopulation = sum(Population),
+    MentalHealthProviders = sum(MentalHealthProviders * Population, 
+                                na.rm = TRUE) / TotalPopulation,
+    PoorMentalHealthDays = sum(PoorMentalHealthDays * Population, 
+                               na.rm = TRUE) / TotalPopulation)
+state_level_data <- state_level_data %>% rename(c(state = "State"))
+
+# plot the number of mental health providers per 100K people at the state level
+plot_usmap(regions = "states",
+           data = state_level_data,
+           values = "MentalHealthProviders") +
+  scale_fill_continuous(low = "white", high = "blue", 
+                        name = "") +
+  labs(title = "Number of Mental Health Providers Per 100K People",
+       subtitle = "All States")
+
+# plot the average number of poor mental health days among the southern states
+plot_usmap(include = .south_region,
+           labels = TRUE,
+           regions = "states",
+           data = state_level_data,
+           values = "PoorMentalHealthDays") +
+  scale_fill_continuous(low = "white", high = "red", 
+                        name = "") +
+  labs(title = "Number of Poor Mental Health Days (out of 30 days)",
+       subtitle = "Southern States Only")
+```
+
+```{r}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProvidersPer100K, fill = ACA)) + 
+  geom_histogram() +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_wrap(ACA ~ ., ncol = 1) +
+  labs(x = "Mental Health Providers per 100k People", 
+       y = "Count", 
+       title = "Mental Health Providers per 100k People, ACA vs. Non-ACA States",
+       subtitle = "County Level Data",
+       color = "ACA")
+```
+
+```{r}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = Uninsured, y = ACA, fill = ACA)) + 
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  #facet_wrap(ACA ~ ., ncol = 1) +
+  labs(x = "% Uninsured", 
+       y = "Count", 
+       title = "% Uninsured, ACA vs. Non-ACA States",
+       subtitle = "County Level Data",
+       color = "ACA")
+```
+
+```{r}
+county_health_data_clean %>%
+  filter(Uninsured > 0.35) %>%
+  select(State, County, PoorMentalHealthDays, MentalHealthProvidersPer100K, 
+         Uninsured, Population, MedianHouseholdIncome, SomeCollege)
+```
+
+```{r}
+county_health_data_clean %>%
+  filter(Uninsured > 0.22, as.numeric(ACA) == 2) %>%
+  select(ACA, State, County, PoorMentalHealthDays, MentalHealthProvidersPer100K, 
+         Uninsured, Population, MedianHouseholdIncome, SomeCollege)
+```
+
+```{r}
+lm_socio <- lm(PoorMentalHealthDays ~ MentalHealthProviders +
+                 SomeCollege + MedianHouseholdIncome,
+               data = county_health_data_clean)
+summary(lm_socio)
+```
+
+```{r}
+county_health_data_RF <- county_health_data_clean %>% 
+  select(PoorMentalHealthDays, LifeExpectancy, LongCommuteDrivingAlone,
+         DrivingAlonetoWork, SevereHousingProblems,
+         SocialAssociations, ChildreninSingleParentHouseholds, IncomeInequality,
+         Unemployment, SomeCollege, HighSchoolCompletion, MentalHealthProviders,
+         Uninsured, TeenBirths, SexuallyTransmittedInfections, ExcessiveDrinking,
+         AccesstoExerciseOpportunities, FoodEnvironmentIndex, State, PoorPhysicalHealthDays,
+         ACA, MedianHouseholdIncome)
+
+colSums(is.na(county_health_data_RF))
+```
+
+```{r, echo = FALSE}
+# remove missing data rows
+county_health_data_RF <- county_health_data_RF %>% drop_na()
+
+# Fit the model
+rf_model <- randomForest(PoorMentalHealthDays ~ LongCommuteDrivingAlone +
+                         SevereHousingProblems + SocialAssociations +
+                         ChildreninSingleParentHouseholds + 
+                         IncomeInequality + Unemployment + SomeCollege + 
+                         MentalHealthProviders + 
+                         Uninsured + TeenBirths + 
+                         ExcessiveDrinking + AccesstoExerciseOpportunities + 
+                         FoodEnvironmentIndex + 
+                         ACA + MedianHouseholdIncome, 
+                         data = county_health_data_RF, importance = TRUE, 
+                         ntree = 500)
+
+rf_model
+```
+
+```{r}
+#variable importance
+vip(rf_model) + theme_minimal() + 
+  labs(title = "Variable Importance Plot, Random Forest",
+       y = "Importance (% Increase in MSE)")
+```
+
+```{r}
+# % increase in MSE for MentalHealthProviders
+importance(rf_model)["MentalHealthProviders", 1]
+```

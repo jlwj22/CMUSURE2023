@@ -1,0 +1,403 @@
+---
+title: "Final Report"
+output: html_document
+author: "Olivia Egede, Julius Jones, Jasmine Philibert, Alayna Prince [TA Advisor: YJ Choe]"
+date: "July 28, 2023"
+---
+
+_(Author names are ordered alphabetically by their last names.)_
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readr)
+
+county_health_data_clean <- read_csv("data/county_health_data_clean.csv")
+# MentalHealthProviders is re-defined per 100K population; 
+# LogMentalHealthProviders is also defined
+county_health_data_clean <- county_health_data_clean %>%
+  mutate(ACA = factor(ACA, levels = c("Not Implemented", "Implemented")),
+         MentalHealthProviders = MentalHealthProviders * 100000,
+         LogMentalHealthProviders = log10(MentalHealthProviders)) 
+```
+
+## Introduction
+
+### Mental Health Awareness and the Need for Mental Health Professionals
+ 
+<!-- Psychology is the study of this realm and although it has been recognized as an area of science since about 500 BC, most advances have been made.  -->
+<!-- Since 2020, mental health awareness has been globally at an all time high. Mental health is defined as a person’s condition in regard to their psychological and emotional well-being. The demand for mental health professionals are due to a reduction in stigma regarding accessing care, lack of financial stability, and place of residence [(report)](https://behavioralhealthnews.org/the-mental-health-needs-of-special-populations/). To bring awareness to these problems, locating mental health professionals is essential to lowering the number of mental health cases and increasing the number of mental health treatments. -->
+
+<!-- revised by Julius and by YJ further: focus recent history within the U.S. -->
+Since 2020, there has been a significant surge in mental health awareness in the United States, with a growing emphasis on understanding and addressing emotional well-being. This heightened awareness has led to an increased demand for mental health professionals, fueled by reduced stigma surrounding seeking care, financial challenges, and disparities in access based on geographical location. To effectively tackle these issues, it becomes crucial to improve access to mental health professionals, as doing so can help lower the number of untreated mental health cases while simultaneously promoting greater access to mental health treatments.
+
+In this report, we analyze the relationship between **access to mental health care**, as measured by the number of available mental health professionals per capita, and **people's mental health status**, as measured by their self-reported number of poor mental health days.
+In doing so, we also focus on two crucial factors that may impact the relationship.
+
+<!-- overlaps with the previous paragraph -->
+<!--
+### 1. Access To Mental Health Care and Mental Health Status
+
+- The motivation behind this research is to develop data that supports the correlation between mental healthcare professionals in a national region of residence to cumulative mental health status of said region.
+- A study has shown that an individuals area of residence, down to the ZIP code, can immensely impact one's general mental health standing 
+- It's important to point out that adequate help with Mental Health conditions can also decrease the effects of detrimental physical illness like cancer or high blood pressure, while poor mental health, on the flip end, can lead to exponential decrease in both mental and physical status
+-->
+  
+  
+### Impact of Socioeconomic Status
+
+According to Social Psychiatry and Psychiatric Epidemiology, instances of poor mental health have been associated with socioeconomic status (Boe et al., 2012). Socioeconomic status is defined as _"the position of an individual or group on the socioeconomic scale, which is determined by a combination of social and economic factors such as income, amount and kind of education, type and prestige of occupation, place of residence, and—in some societies or parts of society—ethnic origin or religious background"_ (American Psychology Association, 2010). 
+Studies have reported association between lower socioeconomic status and increased amounts of negative mental health events. It is also known that _"exposure to stressful life events is related to mental health problems including depression, anxiety and substance abuse. The total number of stressors experienced by an individual may have a direct impact on mental health"_ (M.S. Businelle et al., 2014). 
+
+In this study, we specifically focus on two socioeconomic factors: **median household income** and the education level, as measured by the **percentage of college graduates**, aggregated over each county in the U.S.
+Other socioeconomic factors, such as median wages or housing prices, racial or gender composition, unemployment rate, and income inequality, may further impact the mental health variables; we leave these variables for future work.
+
+
+### Impact of the Affordable Care Act
+
+In 2010, the **Affordable Care Act (ACA)** was implemented in the United States. 
+The ACA has three primary goals: "make affordable health insurance available to more people, expand the medicaid program, and support innovative medical care delivery methods designed to lower the costs of health care generally" (HealthCare.gov). 
+
+The most notable changes the ACA made to healthcare was its expansion of coverage **to decrease the amount of the uninsured in the United States**. Its expansion also included **additional mental health services**, trying to address the precedent of siloed mental health care versus physical health care coverage. 
+According to Baumgartner et al. (2020), "the ACA guarantees access to mental health services within individual, small-group (fully insured), and Medicaid expansion plans by mandating that they cover 10 essential health benefits, including mental health and prescription drugs."
+Furthermore, the ACA requires all plans (including large-group) to cover preventive services like mental health screenings "at no cost."
+
+The Affordable Care Act has been considered controversial in American politics. While implementation of the Affordable Care Act is federal, individual states can choose to reject the additional coverage the ACA offers its residents. 
+According to Kantarjian et al. (2014), at least 30 million of the 50 million previously uninsured US citizens were set to gain health insurance coverage. 
+Furthermore, insurance companies cannot deny coverage for preexisting medical conditions, cannot cancel insurance in the event of sickness, and cannot cap the amount of care received annually or during a patient's lifetime. 
+
+**As of 2023, a total of 12 states have not implemented (either rejected or not implemented) the ACA.**
+Wisconsin, Wyoming, Kansas, Tennessee, Texas, Mississippi, Alabama, Georgia, South Carolina, and Florida rejected the ACA; South Dakota and North Carolina have adopted but not implemented it (Kaiser Family Foundation, 2023). 
+In our analysis, we focus on the binary variable of whether each state has implemented the ACA.
+
+
+## Topic Question and Hypothesis
+
+The key questions and hypotheses of this report are summarized as follows.
+
+<!-- As the United States begins to emphasize the importance of mental health, we must discuss the implications that public policy has on mental health care. -->
+
+1. **Main Question**
+    * How does the number of mental healthcare providers affect the number of self-reported poor mental health days?
+2. **Impact of Socioeconomic Status**
+    a. How does socioeconomic status impact the number of poor mental health days?
+    b. How does socioeconomic status impact the relationship between mental healthcare providers and the number of recorded poor mental health days?
+3. **Impact of the Affordable Care Act**
+    a. Is a relationship between choice in implementation of the ACA and access to mental healthcare providers, in terms of both the availablility of mental health providers and whether or not people are insured? 
+    b. How does ACA implementation affect the relationship between the number of mental health providers per population and the number of poor mental health days?
+
+<!-- older list of questions
+1. How many individuals graduated college in each county? What is the relationship between this number and the number of health professionals per county? 
+2. Is there a direct correlation between mental health professionals per capita and negative mental health days recorded?
+3. Does whether or not a state has implemented or not implemented the ACA have a direct affect on the number of non-insured individuals?
+4. Does a state implementing the ACA have a positive correlation with poor mental health days recorded?
+--> 
+
+We answer these questions with a combination of exploratory analysis, linear modeling, and predictive modeling. 
+
+<!-- hypothesis on ACA; may use
+- We hypothesize there to be a directly proportional relationship between the implementation of the ACA and access to mental health, while also believing that this relationship should result in a decrease (indirectly proportional relationship) between availbility in healthcare providers and recorded mental health days.
+-->
+
+## Data and Key Variables
+
+Throughout our analysis, we use the 2023 version of the [county health rankings data] collected by [] for the purpose of assessing the overall health status of counties across the United States. 
+This dataset collects various health and socieconomic variables for each county in the United States and report aggregate statistics per county.
+**This means that all of our analysis uses data aggregated at the county level, rather than the individiual or state level.**
+The following is a glossary of the key variables we consider from the dataset.
+
+* Mental health variables
+  * **Poor Mental Health Days**: the average number of self-reported poor mental health days, per 30 days, in each county. This is our primary _outcome_ variable that assesses the people's mental health status. While this variable is known to be a reliable measure of people's mental health status, its consistency as a measure to mental health status may be influenced by individual's personal and cultural backgrounds. The mean and median poor mental health days across counties is around 4.8 out of 30 days. 
+  * **Mental Health Providers Per 100K Population**: the number of mental health providers in a county, normalized by 100,000 population. This is our primary _predictor_ variable that measures the availability of mental health care.
+* Socioeconomic factors
+  * **Percentage of College Graduates**: the percentage of college graduates (at least a two-year program) in the county. This is one of our main measures for the socioeconomic status (education).
+  * **Median Household Income**: the median household income in the county. This is one of our main measures for the socioeconomic status (income).
+* Factors related to the ACA
+  * **ACA Implementation**: whether the county belongs to one of the 38 states that implemented the ACA. 
+  * **Uninsured**: the percentage of people without insurance in the county. 
+
+## Exploratory Data Analysis
+
+Each of our exploratory data analysis (EDA) result corresponds to a question.
+
+### How does the number of mental healthcare providers affect the number of self-reported poor mental health days?
+
+<!--
+Question: How does the number of available mental health care providers affect the number of recorded poor mental health days. 
+-->
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+county_health_data_clean %>%
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProviders, y = PoorMentalHealthDays)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(trans = "log10") +
+  theme_bw() +
+  labs(x = "Mental Health Providers Per 100k People", 
+       y = "Poor Mental Health Days", 
+       title = "Scatterplot of Poor Mental Health Days vs Mental Health Providers",
+       subtitle = "County-Level Data",
+       color = "Poor Mental Health Days")
+```
+
+_Visual representation of the relationship between poor mental health days versus the number of mental health providers. This scatter plot utilizes a linear regression mechanism corresponding to healthcare professionals. This plot demonstrates an indirectly proportional relationship between the amount of healthcare providers per 100,000 people and the amount of recorded poor mental health days people. Regardless of the negative regression, the relationship is strong nonetheless._
+
+### How does the percentage of college graduates affect the average number of recorded poor mental health days on a county level?
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+county_health_data_clean %>%
+  ggplot(aes(x = SomeCollege, y = PoorMentalHealthDays,
+             color = SomeCollege)) + 
+  geom_point(alpha = .5) +
+  scale_color_gradient(low = "orange", high = "blue") +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  labs(x = "% College Graduates", y = "Poor Mental Health Days", 
+       title = "Scatterplot of Poor Mental Health Days vs % College Graduates",
+       subtitle = "County Level Data",
+       color = "% College Graduates")
+```
+
+_This is also a location insensitive visual representation of the relationship between poor mental health days recorded and the percentage of college graduates.The data is separated by the percentage (and visually separated by color gradient) of current college graduates. There is an obvious negative linear relationship between the two variables. As the percentage of college graduates increases the number of poor mental health days experiences a decrease, as expected in our hypothesis. This signifying that as personal education increases poor mental health days decrease. _
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+county_health_data_clean %>%
+  ggplot(aes(x = MentalHealthProviders, y = PoorMentalHealthDays,
+             color = SomeCollege)) + 
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_gradient(low = "orange", high = "blue") +
+  theme_bw() +
+  scale_x_continuous(trans = "log10") +
+  labs(x = "Mental Health Providers per 100k People", y = "Poor Mental Health Days", 
+       title = "Scatterplot of Mental Health Providers vs. Poor Mental Health Days",
+       subtitle = "County-Level Data",
+       color = "% College Graduates")
+```
+
+_This is a location insensitive visual representation of the relationship between poor mental health days and the number of mental health providers among 3,082 American counties. The data is then separated by the percentage of current college graduates. There is an observed shift in gradient color representing the increase in percentage of college graduates as mental health providers per 100,000 people increases. However, independent of this relationship, there is a slight negative linear relationship between poor mental health days and mental health providers._
+
+
+### Does the implementation of ACA along with demographic area affect the accessibility to mental health care providers?
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+# ACA as a factor
+county_health_data_clean$ACA <- factor(
+  county_health_data_clean$ACA,
+  levels = c("Not Implemented", "Implemented")
+)
+
+select_states <- c("FL", "AL", "NY", "LA")
+county_health_data_clean %>% 
+  filter(State %in% select_states, CountyRanked == 1) %>%
+  mutate(OrderedState = factor(State, levels = select_states)) %>%
+  ggplot(aes(x = MentalHealthProviders, fill = ACA)) + 
+  geom_histogram(bins = 30) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  facet_wrap(OrderedState ~ ., ncol = 2) +
+  labs(x = "Mental Health Providers per 100k People", 
+       y = "Count", 
+       title = "Mental Health Providers per 100k People, ACA vs. Non-ACA States",
+       subtitle = "County Level Data at Four Select States",
+       color = "ACA")
+```
+
+_This histogram shows the implementation of ACA versus non ACA states on the number of Mental Healthcare providers per 100,000 people in different sectors of the US, serving as a representation of different demographic areas in the U.S. Implemented states are shown in Red - LA & NY while non-implemented states are shown in Blue - AL & FL. This plot shows that non-implemented states have a HIGHER amount of counties with a lower amount of mental healthcare providers._
+
+
+### Does ACA implementation lead to an increase in mental health providers per 100,000 people?
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProvidersPer100K, fill = ACA)) + 
+  geom_histogram() +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_wrap(ACA ~ ., ncol = 1) +
+  labs(x = "Mental Health Providers per 100k People", 
+       y = "Count", 
+       title = "Mental Health Providers per 100k People, ACA vs. Non-ACA States",
+       subtitle = "County Level Data",
+       color = "ACA")
+```
+
+_This histogram shows the impact on the implementation of ACA versus non ACA states on the number of Mental Healthcare providers per 100,000 people among 3082 American counties. This plot shows that non-implemented states have an overall lower amount of mental healthcare providers in comparison to ACA Implemented states._
+
+
+### How does the implementation of ACA affect the percentage of uninsured people?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = Uninsured, y = ACA, fill = ACA)) + 
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1") +
+  #facet_wrap(ACA ~ ., ncol = 1) +
+  labs(x = "% Uninsured", 
+       y = "Count", 
+       title = "% Uninsured, ACA vs. Non-ACA States",
+       subtitle = "County Level Data",
+       color = "ACA")
+```
+ 
+_This is a comparison violin plot displaying the percentage of uninsured people in ACA vs non-ACA states.This visualization shows that there are fewer uninsured individuals in ACA implemented states than non-implemented states. The majority of implemented states have less than 10% uninsured individuals while non-implemented states are closer to 15% of its populations being uninsured. The outlier represented in the non-implemented states is Presidio county(TX) having about 37% of its population being uninsured, due to outside factors not accounted for in this research._
+
+
+### Does the implementation of ACA decrease the availability of mental health care providers along with reported amount of poor mental health days in ACA implemented states vs non-implemented ACA states?
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+select_states <- c("FL", "AL", "NY", "LA")
+county_health_data_clean %>% 
+  # select counties belonging to the states
+  filter(CountyRanked == 1, State %in% select_states) %>%
+  # fix the order of states
+  mutate(OrderedState = factor(State, levels = select_states)) %>%
+  # plot
+  ggplot(aes(x = MentalHealthProvidersPer100K, y = PoorMentalHealthDays,
+             color = ACA)) + 
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_wrap(. ~ OrderedState, ncol = 2) + 
+  labs(x = "Number of Mental Health Providers Per 100K Population",
+       y = "Number of Poor Mental Health Days",
+       title = "Poor Mental Health Days vs. Mental Health Providers, ACA vs. Non-ACA States",
+       subtitle = "County Level Data at Four Select States")
+```
+
+_This scatter plots show the number of Mental Health Care Providers versus Poor Mental Health Days and how ACA affects that in the following states: FL, AL, NY, and LA. This plot demonstrates a linear regression line corresponding to healthcare professionals versus recorded poor mental health days in implemented and non-implemented counties in FL, AL, NY, and LA.It is seen that counties that in counties that have implemented ACA the number of available mental health providers per 100,000 people has significantly different effects on the number of recorded poor mental health days. As seen in NY the number of poor mental health days experiences a decrease as the number of healthcare providers increases, however in LA the number of poor mental health days seems to remain complacent regardless of the number of mental health providers. However, in states that refused to implement ACA there is a clear relationship between the two predictors. As the number of health care providers increase, poor mental health days decrease._
+
+
+
+Question: How does the implementation of ACA affect the availability of health care providers across and poor mental health days recorded across the U.S.?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+county_health_data_clean %>% 
+  filter(CountyRanked == 1) %>%
+  ggplot(aes(x = MentalHealthProvidersPer100K, y = PoorMentalHealthDays,
+             color = ACA)) + 
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1") +
+  scale_x_continuous(trans = "log10") +
+  facet_grid(. ~ ACA) +
+  labs(x = "Number of Mental Health Providers Per 100K Population",
+       y = "Number of Poor Mental Health Days",
+       title = "Poor Mental Health Days vs. Mental Health Providers Per 100K Population",
+       subtitle = "Counties in ACA vs. Non-ACA States")
+```
+
+
+_Visual representation of the linear relationship between reported poor mental health days versus the number of mental health providers in ACA accepted states versus non ACA accepted states across a 30 day span. This plot demonstrates that counties that ACA counties have more mental health providers per 1000,000 people, but also has an increased amount of poor mental health days reported. Although our hypothesis was refuted there is nonetheless a very strong relationship demonstrated here._
+
+
+
+## Linear Modeling 
+
+Below we will go into the linear relationships of the predictors being examined through this research. This is a sample model that demonstrates that the relationship is linear. Although not perfect, it allows certain assumptions to be made regarding the relationship between certain predictors. 
+
+
+### Basic Linear Model
+```{r, echo = FALSE, warning=FALSE}
+lm_basic <- lm(PoorMentalHealthDays ~ LogMentalHealthProviders,
+               data = county_health_data_clean)
+summary(lm_basic)
+```
+_This model displays the relationship between the number of mental health providers and the average number of recorded poor mental health days on a county based level that is statistically significant (p-value < 0.001). The model states that a 10-fold increase in the number of available mental health care providers would result in the average number of poor mental health days recorded to decrease by .105 days in the 2892 U.S. counties accounted for after deleting 188 counties due to lack of data)._
+
+#### Model 1 diagnostics
+```{r, echo = FALSE}
+library(ggfortify)
+autoplot(lm_basic, ncol = 2) + theme_minimal()
+```
+
+### Poor Mental Health Days vs. (log)Mental Health Providers, controlling for socioeconomic factors 
+
+```{r, echo = FALSE, warning=FALSE}
+lm_socio <- lm(PoorMentalHealthDays ~ LogMentalHealthProviders + 
+               SomeCollege + MedianHouseholdIncome,
+             data = county_health_data_clean)
+summary(lm_socio)
+```
+
+_This model displays the relationship between the number of mental health providers and the average number of recorded poor mental health days on a county considering the college graduation percentage and the median household income. We also found the relationship to be statistically significant (p-value < 0.001). The model displays that a 10-fold increase in the number of available mental health care providers would actually result in the average number of poor mental health days recorded to increase by 1.56 days in the 2892 U.S.counties accounted for._
+
+### Poor Mental Health Days vs. (log)Mental Health Providers, controlling for ACA implementation 
+
+```{r, echo = FALSE,  warning=FALSE}
+lm_aca <- lm(PoorMentalHealthDays ~ LogMentalHealthProviders * ACA,
+             data = county_health_data_clean)
+summary(lm_aca)
+```
+
+_This model displays the relationship between the number of mental health providers and the average number of recorded poor mental health days considering whether or not a state has implemented the ACA. The model displays an increased need for mental health providers in non-ACA states as there is a significant relationship between the 10-fold increase of mental healthcare providers and a decreases in poor mental health days recorded by 0.363 days in the 2892 U.S.counties accounted for._
+
+The linear model is expressed as follows:
+<!-- equation environment -->
+\[
+PoorMentalHealthDays = \alpha_0 + \alpha_1 \cdot ACA + 
+\beta_0 \log_{10}(MentalHealthProviders) + \beta_1 \cdot \log_{10}(MentalHealthProviders) \cdot ACA.
+\]
+
+In the case where $ACA=0$ (not implemented), $\alpha_0$ is the intercept and $\beta_0$ is the slope.
+* In the case where $ACA=1$ (implemented), $\alpha_0 + \alpha_1$ is the intercept and $\beta_0 + \beta_1$ is the slope.
+
+
+#### Poor Mental Health Days vs. (log)Mental Health Providers, controlling for socioeconomic factors and only considering Non-ACA Implemented States
+
+
+```{r, echo = FALSE, warning=FALSE}
+# PMHD vs. MHP controlling for socioeconomic factors, just looking at NON-ACA STATES
+county_health_data_non_aca <- county_health_data_clean %>% filter(as.numeric(ACA) == 1)
+# print(nrow(county_health_data_non_aca))
+
+lm_socio <- lm(PoorMentalHealthDays ~ LogMentalHealthProviders + 
+               SomeCollege + MedianHouseholdIncome,
+             data = county_health_data_non_aca)
+summary(lm_socio)
+```
+
+_Given that the relationship is significant only with non-ACA states, we will now further examine the relationship while controlling for the socioeconomic variables.This model displays the relationship between the number of mental health providers and the average number of recorded poor mental health days considering the college graduation percentage and the median household income while fixing results to only be polled from non-ACA implemented states. This model shows that a 10-fold increase on the number of mental health providers results in a decrease in the number of poor mental health days recorded by 1.13 days emphasizing that in non-ACA states an increase in available mental health care providers would result in the overall decrease in recorded poor mental health days._
+
+
+## Predictive Modeling via Random Forests
+
+[TODO]
+
+
+## Discussion
+
+### Conclusion
+- Both our exploratory analysis and our simple linear model analysis demonstrate that there is a significant relationship between the number of mental health providers and the average number of poor mental health days in counties.
+  - As the number of mental health providers per 100,000 people increases, the number of poor mental health days decreases.
+  - We find that counties with higher percentage of college graduates have more mental heal providers per 100K people and less reported poor mental health days.
+- Counties in states that implemented ACA tend to have a higher number of mental health providers per 100,000 people and a lower percentage of uninsured people.
+- In states that did not implement ACA, the number of poor mental health days decreases as the number of mental health providers per 100K people increases, even after controlling for socioeconomic variables (college graduate % and median household income).
+
+### Limitations
+- There were 187 counties that did not input data for the number of poor mental health providers present, while other counties left multiple variables uncompleted.
+- Race and gender were two variables that we were unable to explore and examine how they had an effect on the data used.
+- We had to convert raw numbers that were too small in order to effectively complete the EDA.
+- Due to this data being self reported, there’s a limitation on how specific this data could be in determining whether or not there is false reporting.
+- The linear model analysis relies on strong assumptions-- interpret with caution.
